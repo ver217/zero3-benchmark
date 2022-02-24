@@ -1,0 +1,14 @@
+import torch
+
+# BATCH_SIZE = 128
+BATCH_SIZE = 16
+IMG_SIZE = 224
+NUM_CLASS = 1000
+SEQ_LEN = 1024
+
+# WARMUP = 10
+# TEST_ITERS = 100
+WARMUP = 5
+TEST_ITERS = 20
+
+OPTIM = torch.optim.Adam
