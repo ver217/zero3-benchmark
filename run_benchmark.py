@@ -13,7 +13,7 @@ import benchmark.deepspeed as ds
 import benchmark.fairscale as fs
 import models
 from benchmark.configs.common import *
-from benchmark.utils import get_time, parse_args
+from benchmark.utils import get_model_size, get_tflops, get_time, parse_args
 
 
 def main():
@@ -32,8 +32,12 @@ def main():
         print('initialized torch distributed')
         print(vars(args))
 
-    model = models.GPT2_exlarge(checkpoint=True).cuda()
+    model = models.GPT_10B(checkpoint=True).cuda()
     criterion = models.GPTLMLoss()
+
+    model_size = get_model_size(model)
+    if dist.get_rank() == 0:
+        print(f'Model size: {model_size:.3f}B')
 
     if args.type == 'fs':
         model, optimizer = fs.init(model, offload=args.offload)
@@ -67,9 +71,12 @@ def main():
         with open('log.csv', 'a') as f:
             writer = csv.writer(f)
             if f.tell() == 0:
-                writer.writerow(['Method', 'Autocast', 'Offload', 'Avg time', 'Max mem allocated', 'Max mem cached'])
+                writer.writerow(['Method', 'Autocast', 'Offload', 'Avg time',
+                                'Max mem allocated', 'Max mem cached', 'TFLOPS', 'BParams'])
             writer.writerow([args.type, str(args.autocast), str(args.offload),
-                            f'{stats[0].item():.3f}', f'{stats[1].item():.2f}', f'{stats[2].item():.2f}'])
+                            f'{stats[0].item():.3f}', f'{stats[1].item():.2f}', f'{stats[2].item():.2f}',
+                             f'{get_tflops(model_size, stats[0].item(), BATCH_SIZE, SEQ_LEN):.2f}',
+                             f'{model_size:.3f}'])
 
 
 if __name__ == '__main__':

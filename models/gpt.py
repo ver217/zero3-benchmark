@@ -9,7 +9,8 @@ __all__ = [
     'GPT2_large',
     'GPT2_exlarge',
     'GPT3',
-    'VOCAB_SIZE'
+    'VOCAB_SIZE',
+    'GPT_10B',
 ]
 
 VOCAB_SIZE = 50257
@@ -67,5 +68,11 @@ def GPT2_exlarge(checkpoint=False):
 
 def GPT3(checkpoint=False):
     cfg = dict(hidden_size=12288, num_layers=96, num_attention_heads=96, max_seq_len=2048)
+    model = GPTLMModel(checkpoint=checkpoint, **cfg)
+    return model
+
+
+def GPT_10B(checkpoint=False):
+    cfg = dict(hidden_size=4096, num_layers=50, num_attention_heads=16)
     model = GPTLMModel(checkpoint=checkpoint, **cfg)
     return model
