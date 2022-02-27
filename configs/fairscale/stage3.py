@@ -1,3 +1,4 @@
+stage = 3
 autocast = True
 zero = dict(optimizer=dict(),
             model=dict(

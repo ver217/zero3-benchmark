@@ -13,13 +13,13 @@ then
     echo "finished benchmarking for FairScale ZeRO Stage 1"
 fi
 
-if [[ "$stage" == 2 || "$STAGE"  -eq -1 ]]
+if [[ "$STAGE" == 2 || "$STAGE"  -eq -1 ]]
 then
     $EXEC_COMMAND --config ./configs/fairscale/stage2.py
     echo "finished benchmarking for FairScale ZeRO Stage 2"
 fi
 
-if [[ "$stage" == 3 || "$STAGE"  -eq -1 ]]
+if [[ "$STAGE" == 3 || "$STAGE"  -eq -1 ]]
 then
     $EXEC_COMMAND --config ./configs/fairscale/stage3.py
     $EXEC_COMMAND --config ./configs/fairscale/stage3_offload.py

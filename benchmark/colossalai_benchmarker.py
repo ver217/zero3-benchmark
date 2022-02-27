@@ -1,6 +1,7 @@
 from .base_benchmarker import Benchmaker
 from colossalai.context import Config
 import torch
+from colossalai.zero import ShardedModel, ShardedOptimizer
 
 
 class ColossalaiBenchmarker(Benchmaker):
@@ -9,16 +10,17 @@ class ColossalaiBenchmarker(Benchmaker):
         config = Config.from_file(config_path)
         optimizer = optim_class(model.parameters(), **config.optimizer)
         if config.stage in [1, 2]:
-            from colossalai.zero.zero_stage2_develop import ShardedOptimizer
             model = model.half().cuda()
             optimizer = ShardedOptimizer(optimizer=optimizer, **config.zero.optimizer)
         elif config.stage == 3:
-            from colossalai.zero.zero_stage3_develop import ZeroRedundancyLevel3Model
-            offload_config = {}
-            if config.offload:
+            if hasattr(config.zero.model, 'offload_config'):
                 model = model.cpu()
-                offload_config['device'] = 'cpu'
-            model = ZeroRedundancyLevel3Model(model=model, **config.zero.model)
+            model = ShardedModel(module=model, **config.zero.model)
+
+            if hasattr(config, 'autocast'):
+                self.autocast = True
+            else:
+                self.autocast = False
         else:
             raise ValueError('invalid stage number')
         super().__init__(config, optimizer, model, criterion)
@@ -46,7 +48,7 @@ class ColossalaiBenchmarker(Benchmaker):
         self.optimizer.zero_grad()
         self.model.zero_grad(set_to_none=True)
 
-        with torch.cuda.amp.autocast(enabled=self.config.autocast):
+        with torch.cuda.amp.autocast(enabled=self.autocast):
             out = self.model(*data)
             if torch.is_tensor(out):
                 out = [out]

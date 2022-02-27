@@ -48,10 +48,9 @@ def main():
             f.write('\n-------------\n')
             f.write(f'type: {args.type}\n')
             f.write(f'average step time: {runtime_stats[0].item():.3f}\n')
-            f.write(
-                f'max memory allocated: {runtime_stats[1].item():.2f}, max memory cached: {runtime_stats[2].item():.2f}'
-            )
-            f.write(f'model size: {model_size:.3f}B')
+            f.write(f'max memory allocated: {runtime_stats[1].item():.2f}\n')
+            f.write(f'max memory cached: {runtime_stats[2].item():.2f}\n')
+            f.write(f'model size: {model_size:.3f}B\n')
             f.write('===========================\n\n')
 
 

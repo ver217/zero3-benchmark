@@ -13,9 +13,19 @@ then
     echo "finished benchmarking for Colossal-AI ZeRO Stage 1"
 fi
 
-if [[ "$stage" == 2 || "$STAGE"  -eq -1 ]]
+if [[ "$STAGE" == 2 || "$STAGE"  -eq -1 ]]
 then
     $EXEC_COMMAND --config ./configs/colossalai/stage2.py
-    $EXEC_COMMAND --config ./configs/colossalai/stage2_with_offload.py
+    $EXEC_COMMAND --config ./configs/colossalai/stage2_offload.py
     echo "finished benchmarking for Colossal-AI ZeRO Stage 2"
+fi
+
+
+if [[ "$STAGE" == 3 || "$STAGE"  -eq -1 ]]
+then
+    $EXEC_COMMAND --config ./configs/colossalai/stage3.py
+    $EXEC_COMMAND --config ./configs/colossalai/stage3_offload.py
+    $EXEC_COMMAND --config ./configs/colossalai/stage3_autocast.py
+    $EXEC_COMMAND --config ./configs/colossalai/stage3_offload_autocast.py
+    echo "finished benchmarking for Colossal-AI ZeRO Stage 3"
 fi

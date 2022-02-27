@@ -23,6 +23,11 @@ class FairScaleBenchmarker(Benchmaker):
             model = FullyShardedDataParallel(model, **config.zero.model)
             optimizer = optim_class(model.parameters(), **config.zero.optimizer)
 
+        if hasattr(config, 'autocast'):
+            self.autocast = True
+        else:
+            self.autocast = False
+
         super().__init__(config, optimizer, model, criterion)
 
     def run_iter(self, data: List[Tensor], label: List[Tensor]):
@@ -31,7 +36,7 @@ class FairScaleBenchmarker(Benchmaker):
         if self.config.stage == 3:
             self.model.zero_grad(set_to_none=True)
 
-        with torch.cuda.amp.autocast(enabled=self.config.autocast):
+        with torch.cuda.amp.autocast(enabled=self.autocast):
             out = self.model(*data)
             loss = self.criterion(out, *label)
         loss.backward()
