@@ -18,8 +18,10 @@ class FairScaleBenchmarker(Benchmaker):
             model = DistributedDataParallel(model)
         elif config.stage == 2:
             optimizer = OSS(model.parameters(), optim_class, **config.optimizer, **config.zero.optimizer)
-            model = ShardedDataParallel(model, **config.zero.model)
+            model = ShardedDataParallel(model, sharded_optimizer=optimizer, **config.zero.model)
         else:
+            if hasattr(config, 'offload') and config.offload:
+                model = model.cpu()
             model = FullyShardedDataParallel(model, **config.zero.model)
             optimizer = optim_class(model.parameters(), **config.zero.optimizer)
 

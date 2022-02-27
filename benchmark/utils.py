@@ -1,10 +1,10 @@
 import colossalai
 import time
-
 import torch
-
 import deepspeed
 
+from colossalai.context import Config
+import json
 
 def get_time():
     torch.cuda.synchronize()
@@ -33,3 +33,26 @@ def parse_args():
     args = parser.parse_args()
 
     return args
+
+def get_stage(args):
+    if args.config:
+        stage = Config.from_file(args.config).stage
+    else:
+        with open(args.deepspeed_config) as f:
+            js_config = json.load(f)
+            stage = js_config['zero_optimization']['stage']
+
+    return stage
+
+def get_autocast_state(args):
+    if args.config:
+        return 'autocast' in args.config
+    else:
+        return 'autocast' in args.deepspeed_config
+
+def get_offload_state(args):
+    if args.config:
+        return 'offload' in args.config
+    else:
+        return 'offload' in args.deepspeed_config
+

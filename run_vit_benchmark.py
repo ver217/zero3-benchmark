@@ -2,40 +2,37 @@ import csv
 import torch
 import torch.distributed as dist
 
-import models
-from benchmark.utils import get_tflops, parse_args, get_autocast_state, get_offload_state, get_stage
+from benchmark.utils import parse_args, get_stage, get_autocast_state, get_offload_state
 from run_benchmark import run_benchmark
+from models import vit_large_patch16_224
 
 
-# BATCH_SIZE = 128
-BATCH_SIZE = 16
-SEQ_LEN = 1024
+BATCH_SIZE = 64
+IMG_SIZE = 224
+NUM_CLASS = 1000
 
-WARMUP = 5
-TEST_ITERS = 20
+WARMUP = 30 # to avoid timing of overflow
+TEST_ITERS = 50
 
 OPTIM = torch.optim.Adam
 
 
 def build_model():
-    model = models.GPT_10B(checkpoint=True).cuda()
-    return model
+    return vit_large_patch16_224(checkpoint=True).cuda()
 
 
 def build_criterion():
-    criterion = models.GPTLMLoss()
-    return criterion
+    return torch.nn.CrossEntropyLoss()
 
 
 def get_batch_data():
-    input_ids = torch.randint(0, models.VOCAB_SIZE, (BATCH_SIZE, SEQ_LEN)).cuda()
-    mask = torch.ones((BATCH_SIZE, SEQ_LEN), dtype=torch.int64, device=torch.cuda.current_device())
-    return [input_ids, mask], [input_ids]
+    img = torch.rand(BATCH_SIZE, 3, IMG_SIZE, IMG_SIZE).cuda()
+    label = torch.randint(low=0, high=1000, size=(BATCH_SIZE,)).cuda()
+    return [img], [label]
 
 
 def main():
     args = parse_args()
-
     model_size, runtime_stats = run_benchmark(args=args,
                                               model_func=build_model,
                                               loss_func=build_criterion,
@@ -45,13 +42,13 @@ def main():
                                               optim_class=OPTIM)
 
     if dist.get_rank() == 0:
-        with open(f'{args.type}_gpt.csv', 'a') as f:
+        with open(f'{args.type}_vit.csv', 'a') as f:
             writer = csv.writer(f)
             if f.tell() == 0:
                 writer.writerow([
-                    'Method', 'Stage', 'Autocast', 'Offload', 'Avg time', 'Max mem allocated', 'Max mem cached', 'TFLOPS',
+                    'Method', 'Stage', 'Autocast', 'Offload', 'Avg time', 'Max mem allocated', 'Max mem cached', 
                     'BParams'
-                ])
+                ])                
             
             autocast = get_autocast_state(args)
             offload = get_offload_state(args)
@@ -59,11 +56,11 @@ def main():
 
             writer.writerow([
                 args.type,
-                str(stage), 
+                str(stage),
                 str(autocast),
                 str(offload), f'{runtime_stats[0].item():.3f}', f'{runtime_stats[1].item():.2f}',
                 f'{runtime_stats[2].item():.2f}',
-                f'{get_tflops(model_size, runtime_stats[0].item(), BATCH_SIZE, SEQ_LEN):.2f}', f'{model_size:.3f}'
+                f'{model_size:.3f}'
             ])
 
 

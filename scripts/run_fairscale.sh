@@ -9,19 +9,19 @@ EXEC_COMMAND="torchrun --standalone --nproc_per_node=${NPROCS} ${EXEC_FILE} --ty
 # stage 1
 if [[ "$STAGE" -eq 1 || "$STAGE"  -eq -1 ]]
 then
-    $EXEC_COMMAND --config ./configs/fairscale/stage1.py
+    $EXEC_COMMAND --config ./configs/fairscale/stage1_autocast.py
     echo "finished benchmarking for FairScale ZeRO Stage 1"
 fi
 
 if [[ "$STAGE" == 2 || "$STAGE"  -eq -1 ]]
 then
-    $EXEC_COMMAND --config ./configs/fairscale/stage2.py
+    $EXEC_COMMAND --config ./configs/fairscale/stage2_autocast.py
     echo "finished benchmarking for FairScale ZeRO Stage 2"
 fi
 
 if [[ "$STAGE" == 3 || "$STAGE"  -eq -1 ]]
 then
-    $EXEC_COMMAND --config ./configs/fairscale/stage3.py
-    $EXEC_COMMAND --config ./configs/fairscale/stage3_offload.py
-    echo "finished benchmarking for FairScale ZeRO Stage 2"
+    $EXEC_COMMAND --config ./configs/fairscale/stage3_autocast.py
+    $EXEC_COMMAND --config ./configs/fairscale/stage3_offload_autocast.py
+    echo "finished benchmarking for FairScale ZeRO Stage 3"
 fi

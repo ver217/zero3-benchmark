@@ -1,17 +1,18 @@
+import csv
 import torch
 import torch.distributed as dist
 
 from torchvision.models import resnet152
-from benchmark.utils import parse_args
+from benchmark.utils import parse_args, get_stage, get_autocast_state, get_offload_state
 from run_benchmark import run_benchmark
-import pprint
+
 
 BATCH_SIZE = 64
 IMG_SIZE = 224
 NUM_CLASS = 1000
 
-WARMUP = 1
-TEST_ITERS = 10
+WARMUP = 10
+TEST_ITERS = 100
 
 OPTIM = torch.optim.Adam
 
@@ -41,17 +42,26 @@ def main():
                                               optim_class=OPTIM)
 
     if dist.get_rank() == 0:
+        with open(f'{args.type}_resnset.csv', 'a') as f:
+            writer = csv.writer(f)
+            if f.tell() == 0:
+                writer.writerow([
+                    'Method', 'Stage', 'Autocast', 'Offload', 'Avg time', 'Max mem allocated', 'Max mem cached', 
+                    'BParams'
+                ])                
+            
+            autocast = get_autocast_state(args)
+            offload = get_offload_state(args)
+            stage = get_stage(args)
 
-        with open(f'resnet_{args.type}_log.txt', 'a') as f:
-            f.write('===========================\n')
-            f.write(pprint.pformat(vars(args)))
-            f.write('\n-------------\n')
-            f.write(f'type: {args.type}\n')
-            f.write(f'average step time: {runtime_stats[0].item():.3f}\n')
-            f.write(f'max memory allocated: {runtime_stats[1].item():.2f}\n')
-            f.write(f'max memory cached: {runtime_stats[2].item():.2f}\n')
-            f.write(f'model size: {model_size:.3f}B\n')
-            f.write('===========================\n\n')
+            writer.writerow([
+                args.type,
+                str(stage),
+                str(autocast),
+                str(offload), f'{runtime_stats[0].item():.3f}', f'{runtime_stats[1].item():.2f}',
+                f'{runtime_stats[2].item():.2f}',
+                f'{model_size:.3f}'
+            ])
 
 
 if __name__ == '__main__':
