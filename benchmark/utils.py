@@ -1,4 +1,4 @@
-import argparse
+import colossalai
 import time
 
 import torch
@@ -25,11 +25,8 @@ def get_model_size(model: torch.nn.Module, unit: str = 'B') -> float:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = colossalai.get_default_parser()
     parser.add_argument('--type', type=str, choices=['ds', 'fs', 'ca'])
-    parser.add_argument('--local_rank', type=int)
-    parser.add_argument('--autocast', default=False, action='store_true')
-    parser.add_argument('--offload', default=False, action='store_true')
 
     # Include DeepSpeed configuration arguments
     parser = deepspeed.add_config_arguments(parser)
